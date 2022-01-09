@@ -1,0 +1,53 @@
+module.exports = {
+    'env': {
+        'browser': true,
+        'es2021': true,
+        'node': true,
+    },
+    'extends': [
+        'eslint:recommended',
+        'plugin:@typescript-eslint/recommended',
+    ],
+    'parser': '@typescript-eslint/parser',
+    'parserOptions': {
+        'ecmaVersion': 13,
+        'sourceType': 'module',
+    },
+    'plugins': [
+        '@typescript-eslint',
+        'import',
+    ],
+    'rules': {
+        'array-bracket-spacing': ['error'],
+        'brace-style': ['error'],
+        'comma-dangle': ['error', 'always-multiline'],
+        'eqeqeq': ['error'],
+        'indent': ['error',4],
+        'linebreak-style': ['error','unix'],
+        'no-else-return': ['error'],
+        'no-trailing-spaces': ['error'],
+        'object-curly-spacing': ['error', 'always'],
+        'object-shorthand': ['error'],
+        'prefer-const': ['error'],
+        'quotes': ['error','single'],
+        'semi': ['error','always'],
+        'import/order': ['error'],
+        'import/no-duplicates': ['error'],
+        'import/newline-after-import': ['error'],
+        '@typescript-eslint/array-type': ['error', { 'default': 'array-simple' }],
+        '@typescript-eslint/type-annotation-spacing': ['error'],
+        '@typescript-eslint/member-delimiter-style': ['error'],
+        '@typescript-eslint/no-confusing-non-null-assertion': ['error'],
+        '@typescript-eslint/explicit-member-accessibility': ['error', {
+            accessibility: 'explicit',
+            overrides: {
+                accessors: 'explicit',
+                constructors: 'off',
+                methods: 'explicit',
+                properties: 'off',
+                parameterProperties: 'explicit',
+            },
+        }],
+        '@typescript-eslint/no-non-null-assertion': ['off'],
+    },
+};
