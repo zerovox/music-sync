@@ -38,6 +38,8 @@ module.exports = {
         '@typescript-eslint/type-annotation-spacing': ['error'],
         '@typescript-eslint/member-delimiter-style': ['error'],
         '@typescript-eslint/no-confusing-non-null-assertion': ['error'],
+        '@typescript-eslint/no-invalid-void-type': ['error'],
+        '@typescript-eslint/prefer-for-of': ['error'],
         '@typescript-eslint/explicit-member-accessibility': ['error', {
             accessibility: 'explicit',
             overrides: {

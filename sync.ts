@@ -11,9 +11,9 @@ const FOLDER = "music";
 const DB_PATH = "./sync.db";
 const MUSIC_DIR = "Z:\\Music\\Music";
 
-// scanAndSync();
+scanAndSync();
 
-scanForFileTypes(MUSIC_DIR, ".");
+// scanForFileTypes(MUSIC_DIR, ".");
 
 async function scanForFileTypes(localDir: string, localFolder: string) {
     const scanQueue = new Queue(5);
