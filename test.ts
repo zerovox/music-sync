@@ -26,7 +26,7 @@ async function test() {
         syncFile(BUCKET, TEST_FOLDER, MUSIC_DIR, testFile3, etags, db),
     ]);
 
-    await sync(BUCKET, TEST_FOLDER, MUSIC_DIR, testFolder, etags, db);
+    await sync(BUCKET, TEST_FOLDER, MUSIC_DIR, testFolder, etags, db, 16);
 
     return new Promise((res, rej) => {
         db.close(err => {

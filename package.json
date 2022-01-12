@@ -3,6 +3,7 @@
         "@types/node": "^17.0.8",
         "@types/sqlite3": "^3.1.8",
         "@types/winston": "^2.4.4",
+        "@types/xml2json": "^0.11.4",
         "@typescript-eslint/eslint-plugin": "^5.9.0",
         "@typescript-eslint/parser": "^5.9.0",
         "eslint": "^8.6.0",
@@ -16,13 +17,16 @@
         "@aws-sdk/client-s3": "^3.46.0",
         "@aws-sdk/credential-providers": "^3.46.0",
         "@aws-sdk/lib-storage": "^3.46.0",
+        "fast-xml-parser": "^4.0.1",
         "sqlite3": "^4.2.0",
         "winston": "^3.3.3",
-        "winston-console-format": "^1.0.8"
+        "winston-console-format": "^1.0.8",
+        "xml2json": "^0.12.0"
     },
     "scripts": {
-        "lint-fix": "eslint src/** test.ts .eslintrc.js --fix",
+        "lint-fix": "eslint src/** test.ts sync.ts metadata.ts .eslintrc.js --fix",
         "sync": "ts-node sync.ts",
-        "test-sync": "ts-node test.ts"
+        "test-sync": "ts-node test.ts",
+        "metadata": "ts-node metadata.ts"
     }
 }

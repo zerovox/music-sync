@@ -7,8 +7,8 @@ import { uploadTrackedIfDifferent } from './upload';
 
 const EXTENSION_WHITELIST = ['m4a', 'mp3', 'aif', 'aac', 'flac'];
 
-export async function sync(Bucket: string, prefix: string, localDir: string, localFolder: string, remoteEtags: Map<string, string>, db: sqlite3.Database) {
-    const uploadQueue = new Queue(5);
+export async function sync(Bucket: string, prefix: string, localDir: string, localFolder: string, remoteEtags: Map<string, string>, db: sqlite3.Database, concurrentUploads = 5) {
+    const uploadQueue = new Queue(concurrentUploads);
     const scanQueue = new Queue(5);
 
     async function folderScan(folder: string) {
@@ -22,12 +22,12 @@ export async function sync(Bucket: string, prefix: string, localDir: string, loc
                 const pathWithinLocalDir = path.relative(localDir, filePath);
                 const extension = fileName.slice(fileName.lastIndexOf('.') + 1);
                 if (EXTENSION_WHITELIST.indexOf(extension.toLowerCase()) !== -1) {
-                    logger.info('Queuing file', { filePath, extension });
+                    logger.debug('Queuing file', { filePath, extension });
                     uploadQueue.queue(async () => {
                         await syncFile(Bucket, prefix, localDir, pathWithinLocalDir, remoteEtags, db);
                     });
                 } else {
-                    logger.info('Skipping file with non-whitelisted extension', { filePath, extension });
+                    logger.debug('Skipping file with non-whitelisted extension', { filePath, extension });
                 }
             }
         }

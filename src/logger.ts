@@ -2,7 +2,7 @@ import { createLogger, format, transports } from 'winston';
 import { consoleFormat } from 'winston-console-format';
 
 export const logger = createLogger({
-    level: 'silly',
+    level: 'info',
     format: format.combine(
         format.timestamp(),
         format.ms(),

@@ -7,6 +7,8 @@ import { logger } from './logger';
 import { s3 } from './s3';
 import { cleanETag } from './etags';
 
+const PART_SIZE = 50 * 1024 * 1024;
+
 export async function uploadTrackedIfDifferent(Bucket: string, path: string, localPath: string, remoteEtags: Map<string, string>, db: sqlite3.Database) {
     const md5 = await computeMd5Sum(localPath);
     const eTag = remoteEtags.get(path);
@@ -85,6 +87,7 @@ async function upload(Bucket: string, path: string, localPath: string) {
     const parallelUploads3 = new Upload({
         client: s3,
         queueSize: 4, // optional concurrency configuration
+        partSize: PART_SIZE,
         leavePartsOnError: false, // optional manually handle dropped parts
         params: {
             Bucket,

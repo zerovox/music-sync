@@ -1,15 +1,16 @@
-import { setupDb } from "./src/db";
-import { getExistingFileEtags } from "./src/etags";
-import { logger } from "./src/logger";
-import { Queue } from "./src/queue";
-import { sync, syncFile } from "./src/sync";
-import { promises, Stats } from "fs";
-import path from "path";
+import { promises, Stats } from 'fs';
+import path from 'path';
+import { setupDb } from './src/db';
+import { getExistingFileEtags } from './src/etags';
+import { logger } from './src/logger';
+import { Queue } from './src/queue';
+import { sync } from './src/sync';
 
-const BUCKET = "music-v0-studio";
-const FOLDER = "music";
-const DB_PATH = "./sync.db";
-const MUSIC_DIR = "Z:\\Music\\Music";
+const BUCKET = 'music-v0-studio';
+const FOLDER = 'music';
+const DB_PATH = './sync.db';
+const MUSIC_DIR = 'Z:\\Music\\Music';
+const CONCURRENT_UPLOADS = 16;
 
 scanAndSync();
 
@@ -28,7 +29,7 @@ async function scanForFileTypes(localDir: string, localFolder: string) {
             if (stat.isDirectory()) {
                 scanQueue.queue(() => folderScan(filePath));
             } else {
-                const extension = fileName.slice(fileName.lastIndexOf(".") + 1);
+                const extension = fileName.slice(fileName.lastIndexOf('.') + 1);
                 fileTypes[extension] = (fileTypes[extension] ?? 0) + 1;
             }
         }
@@ -36,7 +37,7 @@ async function scanForFileTypes(localDir: string, localFolder: string) {
 
     scanQueue.queue(() => folderScan(`${localDir}\\${localFolder}`));
     await scanQueue.drain();
-    logger.info("file type histogram", fileTypes);
+    logger.info('file type histogram', fileTypes);
 }
 
 async function scanAndSync() {
@@ -44,7 +45,7 @@ async function scanAndSync() {
 
     const etags = await getExistingFileEtags(BUCKET, FOLDER);
 
-    await sync(BUCKET, FOLDER, MUSIC_DIR, ".", etags, db);
+    await sync(BUCKET, FOLDER, MUSIC_DIR, '.', etags, db, CONCURRENT_UPLOADS);
 
     return new Promise((res, rej) => {
         db.close(err => {
