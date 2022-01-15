@@ -1,6 +1,6 @@
 import { promises, Stats } from 'fs';
 import path from 'path';
-import { setupDb } from './src/db';
+import { setupDb, dbRun } from './src/db';
 import { getExistingFileEtags } from './src/etags';
 import { logger } from './src/logger';
 import { Queue } from './src/queue';
@@ -42,6 +42,15 @@ async function scanForFileTypes(localDir: string, localFolder: string) {
 
 async function scanAndSync() {
     const db = await setupDb(DB_PATH);
+
+    await dbRun(db, `
+        CREATE TABLE IF NOT EXISTS sync_status (
+            path STRING PRIMARY KEY,
+            localPath STRING,
+            eTag STRING,
+            md5 STRING
+        )
+    `);
 
     const etags = await getExistingFileEtags(BUCKET, FOLDER);
 

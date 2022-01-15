@@ -6,6 +6,7 @@ import { UploadPartCommandOutput } from '@aws-sdk/client-s3';
 import { logger } from './logger';
 import { s3 } from './s3';
 import { cleanETag } from './etags';
+import { dbRun } from './db';
 
 const PART_SIZE = 50 * 1024 * 1024;
 
@@ -54,17 +55,11 @@ async function uploadTracked(Bucket: string, path: string, localPath: string, md
         return;
     }
 
-    return new Promise((resolve, reject) => {
-        db.run('INSERT OR REPLACE INTO sync_status (path, localPath, eTag, md5) VALUES (?, ?, ?, ?)', [
-            path, localPath, eTag, md5,
-        ], (err) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(uploadResult);
-            }
-        });
-    });
+    await dbRun(db, 'INSERT OR REPLACE INTO sync_status (path, localPath, eTag, md5) VALUES (?, ?, ?, ?)', [
+        path, localPath, eTag, md5,
+    ]);
+
+    return uploadResult;
 }
 
 function computeMd5Sum(localPath: string): Promise<string> {

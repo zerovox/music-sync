@@ -1,4 +1,4 @@
-import { setupDb } from './src/db';
+import { setupDb, dbRun } from './src/db';
 import { getExistingFileEtags } from './src/etags';
 import { sync, syncFile } from './src/sync';
 
@@ -11,6 +11,15 @@ test();
 
 async function test() {
     const db = await setupDb(TEST_DB_PATH);
+
+    await dbRun(db, `
+        CREATE TABLE IF NOT EXISTS sync_status (
+            path STRING PRIMARY KEY,
+            localPath STRING,
+            eTag STRING,
+            md5 STRING
+        )
+    `);
 
     const testFile1 = '16bit\\Cobra\\01 Cobra.mp3';
     const testFile2 = '3 Doors Down\\The Better Life\\2-13 Loser (live).m4a';

@@ -1,16 +1,34 @@
 import fs from 'fs';
 import path from 'path';
-
-const BUCKET = 'music-v0-studio';
-const FOLDER = 'music';
-const DB_PATH = './sync.db';
-const MUSIC_DIR = 'Z:\\Music\\Music';
-
 import { XMLParser } from 'fast-xml-parser';
+import { setupDb, dbRun } from './src/db';
+
+const FOLDER = 'music';
+const DB_PATH = './metadata.db';
+const MUSIC_DIR = 'Z:\\Music\\Music';
+const ALT_MUSIC_DIR = 'C:\\Users\\tim\\Music\\iTunes\\iTunes Media\\Music';
 
 const parser = new XMLParser({ preserveOrder: true  });
 
-fs.readFile( 'C:\\Users\\tim\\Music\\iTunes\\iTunes Music Library.xml', function(err, data) {
+fs.readFile( 'C:\\Users\\tim\\Music\\iTunes\\iTunes Music Library.xml', async function(err, data) {
+    if (err) {
+        throw err;
+    }
+
+    const db = await setupDb(DB_PATH);
+
+    await dbRun(db, `
+        CREATE TABLE IF NOT EXISTS ratings (
+            path STRING PRIMARY KEY,
+            localPath STRING,
+            rating TINYINT,
+            playCount SMALLINT,
+            dateModified STRING,
+            dateAdded STRING,
+            datePlayed STRING
+        )
+    `);
+
     const obj = parser.parse(data);
     const detailsArray = obj[1]['plist'][0]['dict'][15]['dict'];
 
@@ -18,19 +36,22 @@ fs.readFile( 'C:\\Users\\tim\\Music\\iTunes\\iTunes Music Library.xml', function
         const row = (detailsArray[i] as any)['dict'];
         const track = parseRow(row);
 
-        if (track["Location"] == null) {
+        if (track['Location'] == null) {
             continue;
         }
 
-        const filePath = path.resolve(decodeURI(track["Location"]).replace("file://localhost/", ""))
-        const s3Path = FOLDER + filePath.replace(MUSIC_DIR, "");
+        let filePath = path.resolve(decodeURI(track['Location']).replace('file://localhost/', ''));
 
-        if (filePath.startsWith("C:\\Users\\tim\\code\\music-sync")) {
-            console.log(filePath);
-            console.log(track);
+        // Copies of
+        if (filePath.startsWith(ALT_MUSIC_DIR)) {
+            filePath = filePath.replace(ALT_MUSIC_DIR, MUSIC_DIR);
         }
 
-        // console.log(`Track at ${s3Path} has ${track["Rating"]}`);
+        const s3Path = FOLDER + filePath.replace(MUSIC_DIR, '');
+
+        await dbRun(db, 'INSERT OR REPLACE INTO ratings (path, localPath, rating, playCount, dateModified, dateAdded, datePlayed) VALUES (?, ?, ?, ?, ?, ?, ?)', [
+            s3Path, filePath, track['Rating'], track['Play Count'], track['Date Modified'], track['Date Added'], track['Play Date UTC'],
+        ]);
     }
 });
 
@@ -48,7 +69,7 @@ function parseRow(row: any[]) {
     return parsedRow;
 }
 
-const keys = ['Track ID',
+const _keys = ['Track ID',
     'Size',
     'Total Time',
     'Disc Number',
