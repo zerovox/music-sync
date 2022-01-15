@@ -1,20 +1,16 @@
 import fs from 'fs';
 import path from 'path';
 import { XMLParser } from 'fast-xml-parser';
-import { setupDb, dbRun } from './src/db';
+import { setupDb, dbRun, stmtRun } from './src/db';
 
 const FOLDER = 'music';
 const DB_PATH = './metadata.db';
 const MUSIC_DIR = 'Z:\\Music\\Music';
 const ALT_MUSIC_DIR = 'C:\\Users\\tim\\Music\\iTunes\\iTunes Media\\Music';
 
-const parser = new XMLParser({ preserveOrder: true  });
+insertMetadataIntoDb();
 
-fs.readFile( 'C:\\Users\\tim\\Music\\iTunes\\iTunes Music Library.xml', async function(err, data) {
-    if (err) {
-        throw err;
-    }
-
+async function insertMetadataIntoDb() {
     const db = await setupDb(DB_PATH);
 
     await dbRun(db, `
@@ -29,34 +25,67 @@ fs.readFile( 'C:\\Users\\tim\\Music\\iTunes\\iTunes Music Library.xml', async fu
         )
     `);
 
-    const obj = parser.parse(data);
-    const detailsArray = obj[1]['plist'][0]['dict'][15]['dict'];
+    const insert = db.prepare('INSERT OR REPLACE INTO ratings (path, localPath, rating, playCount, dateModified, dateAdded, datePlayed) VALUES (?, ?, ?, ?, ?, ?, ?)');
 
-    for (let i = 1; i < detailsArray.length; i += 2) {
-        const row = (detailsArray[i] as any)['dict'];
-        const track = parseRow(row);
+    const metadata = await getTrackMetadata();
 
-        if (track['Location'] == null) {
-            continue;
-        }
-
-        let filePath = path.resolve(decodeURI(track['Location']).replace('file://localhost/', ''));
-
-        // Copies of
-        if (filePath.startsWith(ALT_MUSIC_DIR)) {
-            filePath = filePath.replace(ALT_MUSIC_DIR, MUSIC_DIR);
-        }
-
-        const s3Path = FOLDER + filePath.replace(MUSIC_DIR, '');
-
-        await dbRun(db, 'INSERT OR REPLACE INTO ratings (path, localPath, rating, playCount, dateModified, dateAdded, datePlayed) VALUES (?, ?, ?, ?, ?, ?, ?)', [
-            s3Path, filePath, track['Rating'], track['Play Count'], track['Date Modified'], track['Date Added'], track['Play Date UTC'],
-        ]);
+    for (const { s3Path, filePath, rating, playCount, dateModified, dateAdded, playDate } of metadata) {
+        stmtRun(insert, s3Path, filePath, rating, playCount, dateModified, dateAdded, playDate);
     }
-});
+}
+
+interface TrackMetadata {
+    s3Path: string;
+    filePath: string;
+    rating: number;
+    playCount: number;
+    dateModified: string;
+    dateAdded: string;
+    playDate: string;
+}
+
+function getTrackMetadata(): Promise<TrackMetadata[]> {
+    return new Promise((resolve, reject) => {
+        fs.readFile( 'C:\\Users\\tim\\Music\\iTunes\\iTunes Music Library.xml', async function(err, data) {
+            if (err) {
+                reject(err);
+            }
+
+            const parser = new XMLParser({ preserveOrder: true  });
+            const obj = parser.parse(data);
+            const detailsArray = obj[1]['plist'][0]['dict'][15]['dict'];
+
+            const results: TrackMetadata[] = [];
+
+            for (let i = 1; i < detailsArray.length; i += 2) {
+                const row = (detailsArray[i] as any)['dict'];
+                const track = parseRow(row);
+
+                if (track['Location'] == null) {
+                    continue;
+                }
+
+                let filePath = path.resolve(decodeURI(track['Location']).replace('file://localhost/', ''));
+
+                // Copies of all altMusicDir files exist in musicDir, itunes just knows about the former
+                if (filePath.startsWith(ALT_MUSIC_DIR)) {
+                    filePath = filePath.replace(ALT_MUSIC_DIR, MUSIC_DIR);
+                }
+
+                const s3Path = FOLDER + filePath.replace(MUSIC_DIR, '');
+
+                results.push({
+                    s3Path, filePath, rating: track['Rating'], playCount: track['Play Count'], dateModified: track['Date Modified'], dateAdded: track['Date Added'], playDate: track['Play Date UTC'],
+                });
+            }
+
+            resolve(results);
+        });
+    });
+}
 
 function parseRow(row: any[]) {
-    const parsedRow: {[key: string]: string} = {};
+    const parsedRow: {[key: string]: any} = {};
 
     for (let i = 0; i < row.length; i += 2) {
         const valueKey = Object.keys(row[i + 1])[0];

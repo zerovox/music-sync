@@ -19,7 +19,19 @@ export function dbRun(db: sqlite3.Database, sql: string, args: any[] = []) {
             if (err) {
                 reject(err);
             } else {
-                resolve(db);
+                resolve(undefined);
+            }
+        });
+    });
+}
+
+export function stmtRun(stmt: sqlite3.Statement, ...args: any[]) {
+    return new Promise((resolve, reject) => {
+        stmt.run(args, (err) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(undefined);
             }
         });
     });
