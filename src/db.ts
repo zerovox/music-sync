@@ -36,3 +36,16 @@ export function stmtRun(stmt: sqlite3.Statement, ...args: any[]) {
         });
     });
 }
+
+
+export function stmtGet(stmt: sqlite3.Statement, ...args: any[]): Promise<{[key: string]: any}> {
+    return new Promise((resolve, reject) => {
+        stmt.get(args, (err, row) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(row);
+            }
+        });
+    });
+}

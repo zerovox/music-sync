@@ -37,3 +37,7 @@ node_modules/
 
 # Sync dbs
 *.db
+*.db-shm
+*.db-wal
+
+.subsonic-credentials
