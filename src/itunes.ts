@@ -42,7 +42,7 @@ export function getTrackMetadata(itunesDbPath: string, s3Folder: string, s3Syncd
                     }
                 }
 
-                const s3Path = s3Folder + '\\' + filePath;
+                const s3Path = s3Folder + '\\' + filePath.replace(/%23/g, '#');
 
                 results.push({
                     filePath,

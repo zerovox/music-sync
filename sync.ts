@@ -8,7 +8,7 @@ import { sync } from './src/sync';
 
 const BUCKET = 'music-v0-studio';
 const FOLDER = 'music';
-const DB_PATH = './sync.db';
+const DB_PATH = './dbs/sync.db';
 const MUSIC_DIR = 'Z:\\Music\\Music';
 const CONCURRENT_UPLOADS = 16;
 

@@ -4,7 +4,7 @@ import { sync, syncFile } from './src/sync';
 
 const BUCKET = 'music-v0-studio';
 const TEST_FOLDER = '_sync-test';
-const TEST_DB_PATH = './test-sync.db';
+const TEST_DB_PATH = './dbs/test-sync.db';
 const MUSIC_DIR = 'Z:\\Music\\Music';
 
 test();
