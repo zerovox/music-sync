@@ -2,14 +2,9 @@ import fs from 'fs';
 import path from 'path';
 import { XMLParser } from 'fast-xml-parser';
 
-const FOLDER = 'music';
-const MUSIC_DIR = 'Z:\\Music\\Music\\';
-const ALT_MUSIC_DIR = 'C:\\Users\\tim\\Music\\iTunes\\iTunes Media\\Music\\';
-
 export interface TrackMetadata {
-    internalPath: string;
-    s3Path: string;
     filePath: string;
+    s3Path: string;
     rating: number;
     playCount: number;
     dateModified: string;
@@ -17,7 +12,7 @@ export interface TrackMetadata {
     playDate: string;
 }
 
-export function getTrackMetadata(itunesDbPath: string): Promise<TrackMetadata[]> {
+export function getTrackMetadata(itunesDbPath: string, s3Folder: string, s3SyncdFolders: string[]): Promise<TrackMetadata[]> {
     return new Promise((resolve, reject) => {
         fs.readFile(itunesDbPath, async function (err, data) {
             if (err) {
@@ -40,18 +35,18 @@ export function getTrackMetadata(itunesDbPath: string): Promise<TrackMetadata[]>
 
                 let filePath = path.resolve(decodeURI(track['Location']).replace('file://localhost/', ''));
 
-                // Copies of all altMusicDir files exist in musicDir, itunes just knows about the former
-                if (filePath.startsWith(ALT_MUSIC_DIR)) {
-                    filePath = filePath.replace(ALT_MUSIC_DIR, MUSIC_DIR);
+                for (const syncdFolder of s3SyncdFolders) {
+                    if (filePath.startsWith(syncdFolder)) {
+                        filePath = filePath.replace(syncdFolder, '');
+                        break;
+                    }
                 }
 
-                const pathInMusicDir = filePath.replace(MUSIC_DIR, '');
-                const s3Path = FOLDER + '\\' + pathInMusicDir;
+                const s3Path = s3Folder + '\\' + filePath;
 
                 results.push({
-                    internalPath: pathInMusicDir,
-                    s3Path,
                     filePath,
+                    s3Path,
                     rating: track['Rating'],
                     playCount: track['Play Count'],
                     dateModified: track['Date Modified'],

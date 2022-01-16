@@ -15,6 +15,7 @@ const CONCURRENT_UPLOADS = 16;
 scanAndSync();
 
 // scanForFileTypes(MUSIC_DIR, ".");
+// TODO: clean up .itlp files/subfiles
 
 async function scanForFileTypes(localDir: string, localFolder: string) {
     const scanQueue = new Queue(5);
