@@ -29,6 +29,7 @@
         "lint-fix": "eslint src/** *.ts *.js --fix",
         "sync": "ts-node sync.ts",
         "test-sync": "ts-node test.ts",
+        "rewrite-playlists": "ts-node rewrite-playlists.ts",
         "metadb": "ts-node metadata-to-db.ts",
         "metanavi": "ts-node metadata-to-navidrome.ts"
     }

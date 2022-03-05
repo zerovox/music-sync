@@ -7,9 +7,11 @@ import { uploadTrackedIfDifferent } from './upload';
 
 const EXTENSION_WHITELIST = ['m4a', 'mp3', 'aif', 'aac', 'flac'];
 
-export async function sync(Bucket: string, prefix: string, localDir: string, localFolder: string, remoteEtags: Map<string, string>, db: sqlite3.Database, concurrentUploads = 5) {
+export async function sync(Bucket: string, prefix: string, localDir: string, localFolder: string, remoteEtags: Map<string, string>, db: sqlite3.Database, concurrentUploads = 5, filesModifiedWithinDays = -1) {
     const uploadQueue = new Queue(concurrentUploads);
     const scanQueue = new Queue(5);
+
+    const recentSince = new Date(Date.now() - (1000 * 60 * 60 * 24 * filesModifiedWithinDays));
 
     async function folderScan(folder: string) {
         const folderFiles = await promises.readdir(folder);
@@ -21,8 +23,12 @@ export async function sync(Bucket: string, prefix: string, localDir: string, loc
             } else {
                 const pathWithinLocalDir = path.relative(localDir, filePath);
                 const extension = fileName.slice(fileName.lastIndexOf('.') + 1);
-                if (EXTENSION_WHITELIST.indexOf(extension.toLowerCase()) !== -1) {
+                if (EXTENSION_WHITELIST.indexOf(extension.toLowerCase()) !== -1 || (pathWithinLocalDir.startsWith('Playlists\\') && extension.toLowerCase() === 'm3u')) {
                     logger.debug('Queuing file', { filePath, extension });
+                    if (filesModifiedWithinDays > 0 && stat.mtime <= recentSince) {
+                        logger.debug(`Skipping file not modified within ${filesModifiedWithinDays} days`, { filePath, extension });
+                        continue;
+                    }
                     uploadQueue.queue(async () => {
                         await syncFile(Bucket, prefix, localDir, pathWithinLocalDir, remoteEtags, db);
                     });

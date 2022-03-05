@@ -11,6 +11,7 @@ const FOLDER = 'music';
 const DB_PATH = './dbs/sync.db';
 const MUSIC_DIR = 'Z:\\Music\\Music';
 const CONCURRENT_UPLOADS = 16;
+const FILES_MODIFIED_WITH_DAYS = 14;
 
 scanAndSync();
 
@@ -55,7 +56,7 @@ async function scanAndSync() {
 
     const etags = await getExistingFileEtags(BUCKET, FOLDER);
 
-    await sync(BUCKET, FOLDER, MUSIC_DIR, '.', etags, db, CONCURRENT_UPLOADS);
+    await sync(BUCKET, FOLDER, MUSIC_DIR, '.', etags, db, CONCURRENT_UPLOADS, 14);
 
     return new Promise((res, rej) => {
         db.close(err => {
